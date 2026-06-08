@@ -123,3 +123,8 @@
   background-clip: text;
   -webkit-text-fill-color: transparent;
 }
+
+.backface-hidden {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}

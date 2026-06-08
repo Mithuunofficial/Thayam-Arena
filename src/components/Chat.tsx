@@ -25,14 +25,31 @@ export const Chat: React.FC<ChatProps> = ({
 }) => {
   const t = translations[lang];
   const [customMsg, setCustomMsg] = React.useState('');
+  const [phrasePage, setPhrasePage] = React.useState(0);
+  const messagesEndRef = React.useRef<HTMLDivElement>(null);
 
-  const quickPhrases = [
+  // Auto-scroll to bottom on new messages
+  React.useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  const quickPhrasesPage1 = [
     t.niceMove,
     t.yourTurn,
     t.wellPlayed,
     "😂",
     "🔥"
   ];
+
+  const quickPhrasesPage2 = [
+    lang === 'en' ? "Oops! 😅" : "அய்யோ! 😅",
+    lang === 'en' ? "Good Luck!" : "நல்வாழ்த்துகள்!",
+    lang === 'en' ? "Oh No!" : "ஐயோ!",
+    "🎉",
+    "🤔"
+  ];
+
+  const currentPhrases = phrasePage === 0 ? quickPhrasesPage1 : quickPhrasesPage2;
 
   const handleSend = (msgText: string) => {
     if (!msgText.trim()) return;
@@ -63,20 +80,30 @@ export const Chat: React.FC<ChatProps> = ({
             </div>
           ))
         )}
+        <div ref={messagesEndRef} />
       </div>
 
       {/* Quick Phrase Buttons Grid */}
-      <div className="p-2 bg-stone-100 dark:bg-stone-900/50 border-t border-amber-900/5 dark:border-stone-900/40 grid grid-cols-5 gap-1">
-        {quickPhrases.map((phrase, idx) => (
-          <button
-            key={idx}
-            onClick={() => handleSend(phrase)}
-            className="py-1 px-1 text-[10px] font-semibold bg-white dark:bg-stone-850 border border-stone-200 dark:border-stone-800 hover:border-amber-900/40 dark:hover:border-amber-700/55 hover:bg-amber-50 dark:hover:bg-amber-950/20 rounded shadow-sm transition text-stone-800 dark:text-stone-200 text-center truncate"
-            title={phrase}
-          >
-            {phrase}
-          </button>
-        ))}
+      <div className="p-2 bg-stone-100 dark:bg-stone-900/50 border-t border-amber-900/5 dark:border-stone-900/40 flex items-center space-x-1.5">
+        <div className="flex-grow grid grid-cols-5 gap-1">
+          {currentPhrases.map((phrase, idx) => (
+            <button
+              key={idx}
+              onClick={() => handleSend(phrase)}
+              className="py-1 px-1 text-[10px] font-semibold bg-white dark:bg-stone-850 border border-stone-200 dark:border-stone-800 hover:border-amber-900/40 dark:hover:border-amber-700/55 hover:bg-amber-50 dark:hover:bg-amber-950/20 rounded shadow-sm transition text-stone-800 dark:text-stone-200 text-center truncate"
+              title={phrase}
+            >
+              {phrase}
+            </button>
+          ))}
+        </div>
+        <button
+          type="button"
+          onClick={() => setPhrasePage((p) => (p === 0 ? 1 : 0))}
+          className="py-1 px-1.5 bg-amber-900 dark:bg-amber-800 text-amber-50 rounded hover:bg-amber-800 transition text-[9px] font-bold flex-shrink-0 w-8 text-center"
+        >
+          {phrasePage === 0 ? "2/2" : "1/2"}
+        </button>
       </div>
 
       {/* Custom Text Entry */}
@@ -104,3 +131,4 @@ export const Chat: React.FC<ChatProps> = ({
     </div>
   );
 };
+

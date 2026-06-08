@@ -159,5 +159,4 @@ export const Dice3D: React.FC<Dice3DProps> = ({
       )}
     </div>
   );
-  );
 };

@@ -69,7 +69,7 @@ export const Board: React.FC<BoardProps> = ({
                 ? (isDark ? "#31231D" : "#FFFBF0") 
                 : (isDark ? "#231B17" : "#FFFFFF");
             const strokeColor = isDark ? "#4D3A2F" : "#1C1917";
-            const coordColor = isDark ? "#A16207" : "#B45309";
+            const coordColor = isDark ? "#D97706" : "#B45309";
 
             return (
               <g 
@@ -89,7 +89,7 @@ export const Board: React.FC<BoardProps> = ({
                 />
 
                 {/* Grid coordinate helper */}
-                <text x={x+4} y={y+10} fill={coordColor} fontSize="6.5" fontWeight="bold" opacity="0.35" fontFamily="Courier">
+                <text x={x+4} y={y+10} fill={coordColor} fontSize="6.5" fontWeight="bold" opacity={isDark ? "0.6" : "0.35"} fontFamily="Courier">
                   {r},{c}
                 </text>
                 
