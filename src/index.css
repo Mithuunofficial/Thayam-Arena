@@ -1,0 +1,125 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-cyberBg text-white font-inter antialiased overflow-x-hidden;
+    background-image: 
+      radial-gradient(circle at 10% 20%, rgba(0, 194, 255, 0.03) 0%, transparent 40%),
+      radial-gradient(circle at 90% 80%, rgba(255, 107, 0, 0.03) 0%, transparent 40%);
+  }
+}
+
+/* Custom premium glows */
+.glow-gold {
+  box-shadow: 0 0 20px rgba(245, 176, 65, 0.4);
+  border-color: #F5B041;
+}
+
+.glow-gold-subtle {
+  box-shadow: 0 0 10px rgba(245, 176, 65, 0.2);
+}
+
+.glow-blue {
+  box-shadow: 0 0 20px rgba(0, 194, 255, 0.4);
+  border-color: #00C2FF;
+}
+
+.glow-orange {
+  box-shadow: 0 0 20px rgba(255, 107, 0, 0.4);
+  border-color: #FF6B00;
+}
+
+.glow-green {
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+  border-color: #10B981;
+}
+
+.glow-red {
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+  border-color: #EF4444;
+}
+
+/* Keyframe animations */
+@keyframes pulseGlow {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.03);
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 2s infinite ease-in-out;
+}
+
+@keyframes spinSlow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spinSlow 30s infinite linear;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.animate-float {
+  animation: float 4s infinite ease-in-out;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0B0F1A;
+}
+::-webkit-scrollbar-thumb {
+  background: #1F2937;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #F5B041;
+}
+
+/* Textured panels */
+.temple-panel {
+  background: rgba(17, 24, 39, 0.85);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(245, 176, 65, 0.15);
+  position: relative;
+}
+
+.temple-panel::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(245, 176, 65, 0.3), transparent);
+}
+
+.text-gold-gradient {
+  background: linear-gradient(135deg, #FFE8A3 0%, #F5B041 50%, #C38012 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
