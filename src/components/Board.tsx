@@ -9,6 +9,8 @@ interface BoardProps {
   onCellClick?: (row: number, col: number) => void;
   theme?: 'light' | 'dark';
   lang?: Language;
+  selectedPieceMoves?: { rollValue: number; targetCell: [number, number]; pathCoords: [number, number][] }[];
+  onMoveSelect?: (rollValue: number) => void;
 }
 
 export const Board: React.FC<BoardProps> = ({
@@ -17,7 +19,9 @@ export const Board: React.FC<BoardProps> = ({
   activeColorHex = '#D97706',
   onCellClick,
   theme = 'light',
-  lang = 'en'
+  lang = 'en',
+  selectedPieceMoves = [],
+  onMoveSelect
 }) => {
   const cellSize = 64;
   const padding = 26; 
@@ -129,7 +133,7 @@ export const Board: React.FC<BoardProps> = ({
                       fontWeight="black" 
                       fontFamily="sans-serif"
                     >
-                      {lang === 'en' ? 'HOME' : 'இல்லம்'}
+                      {lang === 'en' ? 'WIN 🏆' : 'வெற்றி 🏆'}
                     </text>
                   </g>
                 )}
@@ -181,6 +185,88 @@ export const Board: React.FC<BoardProps> = ({
             })}
           </g>
         )}
+
+        {/* Selected Piece Moves on-board path highlighting & step badges */}
+        {selectedPieceMoves && selectedPieceMoves.map((move, moveIdx) => {
+          const endPixel = getCellPixelCoords(move.targetCell[0], move.targetCell[1]);
+
+          return (
+            <g key={`select-move-${moveIdx}`}>
+              {/* Dashed line along the path */}
+              {move.pathCoords.map((coord, coordIdx) => {
+                const prev = coordIdx === 0 ? null : move.pathCoords[coordIdx - 1];
+                const pStart = prev ? getCellPixelCoords(prev[0], prev[1]) : null;
+                const pEnd = getCellPixelCoords(coord[0], coord[1]);
+
+                return (
+                  <g key={`path-${coordIdx}`}>
+                    {pStart && (
+                      <line 
+                        x1={pStart.x} 
+                        y1={pStart.y} 
+                        x2={pEnd.x} 
+                        y2={pEnd.y} 
+                        stroke={activeColorHex} 
+                        strokeWidth="3.5" 
+                        strokeLinecap="round"
+                        strokeDasharray="2, 3"
+                        opacity="0.85"
+                        className="animate-pulse"
+                      />
+                    )}
+                  </g>
+                );
+              })}
+
+              {/* Interactive Target Cell Steps Badge */}
+              <g 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onMoveSelect?.(move.rollValue);
+                }}
+                className="cursor-pointer group"
+              >
+                {/* Glowing halo */}
+                <circle 
+                  cx={endPixel.x} 
+                  cy={endPixel.y} 
+                  r="15" 
+                  fill="none" 
+                  stroke={activeColorHex} 
+                  strokeWidth="2.5"
+                  className="animate-ping"
+                  style={{ animationDuration: '2s' }}
+                  opacity="0.6"
+                />
+                {/* Main Badge circle */}
+                <circle 
+                  cx={endPixel.x} 
+                  cy={endPixel.y} 
+                  r="12" 
+                  fill={isDark ? "#120F0D" : "#FFFBE6"} 
+                  stroke={activeColorHex} 
+                  strokeWidth="2.5"
+                  className="group-hover:scale-110 transition-transform duration-200"
+                  style={{ transformOrigin: `${endPixel.x}px ${endPixel.y}px` }}
+                />
+                {/* Badge Label (e.g. +4) */}
+                <text 
+                  x={endPixel.x} 
+                  y={endPixel.y + 3.5} 
+                  textAnchor="middle" 
+                  fill={activeColorHex} 
+                  fontSize="9" 
+                  fontWeight="black" 
+                  fontFamily="sans-serif"
+                  className="select-none group-hover:scale-110 transition-transform duration-200"
+                  style={{ transformOrigin: `${endPixel.x}px ${endPixel.y}px` }}
+                >
+                  +{move.rollValue}
+                </text>
+              </g>
+            </g>
+          );
+        })}
 
         {children}
       </svg>

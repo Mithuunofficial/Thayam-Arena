@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Cpu, Play, Copy, ArrowLeft, Sun, Moon } from 'lucide-react';
+import { Users, Cpu, Play, Copy, ArrowLeft, Sun, Moon, Trophy, Award } from 'lucide-react';
 import { dbService } from '../supabase/db';
 import type { RoomState } from '../supabase/db';
+import { adminDb } from '../supabase/adminDb';
+import type { AdminTournament } from '../supabase/adminDb';
 import { translations } from '../utils/i18n';
 import type { Language } from '../utils/i18n';
 import { useAuth } from '../supabase/AuthContext';
@@ -62,8 +64,72 @@ export const Lobby: React.FC<LobbyProps> = ({
   const [roomState, setRoomState] = useState<RoomState | null>(null);
   const [isHost, setIsHost] = useState(false);
   const [myPlayerId, setMyPlayerId] = useState<number>(0);
-  const [myUid] = useState(() => 'user-' + Math.random().toString(36).substring(2, 9));
+  const myUid = user?.uid || 'guest-' + Math.random().toString(36).substring(2, 9);
   const [copyFeedback, setCopyFeedback] = useState(false);
+
+  // Tournament registration states
+  const [tournaments, setTournaments] = useState<AdminTournament[]>([]);
+  const [isRegistering, setIsRegistering] = useState<string | null>(null);
+
+  // Subscribe to real-time tournaments
+  useEffect(() => {
+    const unsubscribe = adminDb.subscribeToTournaments((data) => {
+      setTournaments(data);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const handleRegisterTournament = async (tourney: AdminTournament) => {
+    if (!user) {
+      alert(lang === 'en' ? "Please register or sign in first!" : "தயவுசெய்து முதலில் பதிவு செய்யவும்!");
+      return;
+    }
+    
+    const currentCoins = user.coins ?? 1000;
+    if (currentCoins < 100) {
+      alert(lang === 'en' 
+        ? "Insufficient coins! You need 100 coins to register for a tournament." 
+        : "போதிய நாணயங்கள் இல்லை! போட்டியில் சேர 100 நாணயங்கள் தேவை."
+      );
+      return;
+    }
+
+    if (tourney.players.includes(user.displayName)) {
+      alert(lang === 'en' ? "Already registered for this tournament!" : "ஏற்கனவே இந்த போட்டியில் இணைந்துள்ளீர்கள்!");
+      return;
+    }
+
+    setIsRegistering(tourney.id);
+
+    try {
+      // Deduct 100 coins
+      await adminDb.updateUser(user.uid, {
+        coins: currentCoins - 100
+      });
+
+      // Update tournament players list
+      await adminDb.updateTournament(tourney.id, {
+        players: [...tourney.players, user.displayName]
+      });
+
+      // Log activity
+      await adminDb.createAdminLog(
+        'Register Tournament',
+        tourney.id,
+        `User ${user.displayName} registered for tournament "${tourney.name}" (deducted 100 coins).`
+      );
+
+      alert(lang === 'en' 
+        ? "Successfully registered for the tournament!" 
+        : "போட்டியில் வெற்றிகரமாக இணைந்துள்ளீர்கள்!"
+      );
+    } catch (e: any) {
+      console.error(e);
+      alert(lang === 'en' ? `Registration failed: ${e.message}` : `பதிவு தோல்வியடைந்தது: ${e.message}`);
+    } finally {
+      setIsRegistering(null);
+    }
+  };
 
   // Set default names based on local storage or randomized names
   useEffect(() => {
@@ -165,22 +231,30 @@ export const Lobby: React.FC<LobbyProps> = ({
     const code = generateRoomCode();
     setIsHost(true);
     setMyPlayerId(0); // Host is always Player 1 (Red)
-    setActiveRoomId(code);
     
-    // Create base room in Realtime DB
-    await dbService.createRoom(code, 'multi', gameType, difficulty);
+    try {
+      // Create base room in Realtime DB
+      await dbService.createRoom(code, 'multi', gameType, difficulty);
 
-    // Join room as Player 1 (Red)
-    await dbService.joinRoom(code, 'player0', {
-      uid: myUid,
-      name: playerName || (lang === 'en' ? 'Player 1' : 'வீரர் 1'),
-      color: 'red',
-      team: 'A',
-      ready: true, // Host is ready by default
-      isBot: false
-    });
+      // Join room as Player 1 (Red)
+      await dbService.joinRoom(code, 'player0', {
+        uid: myUid,
+        name: playerName || (lang === 'en' ? 'Player 1' : 'வீரர் 1'),
+        color: 'red',
+        team: 'A',
+        ready: true, // Host is ready by default
+        isBot: false
+      });
 
-    setStep('lobby');
+      setActiveRoomId(code);
+      setStep('lobby');
+    } catch (e: any) {
+      console.error("Failed to create room:", e);
+      alert(lang === 'en'
+        ? `Failed to create room: ${e.message || 'Verify database connection & RLS Policies.'}`
+        : `அறையை உருவாக்க முடியவில்லை: ${e.message || 'தரவுத்தள இணைப்பு & கொள்கைகளை சரிபார்க்கவும்.'}`
+      );
+    }
   };
 
   // 3. Multi Player Setup - Join Room
@@ -319,6 +393,16 @@ export const Lobby: React.FC<LobbyProps> = ({
         </div>
         
         <div className="flex items-center space-x-3">
+          {user && (
+            <button
+              onClick={() => navigate('/profile')}
+              className="flex items-center space-x-1.5 px-3 py-1 bg-amber-800 hover:bg-amber-750 dark:bg-stone-900 dark:hover:bg-stone-850 border border-amber-50/35 rounded-md text-xs font-bold text-white transition cursor-pointer"
+            >
+              <span className="w-2 h-2 rounded-full bg-[#F5B041] shadow-[0_0_4px_#F5B041]" />
+              <span>{user.displayName} (🪙 {user.coins ?? 1000})</span>
+            </button>
+          )}
+
           <button 
             onClick={onLanguageToggle}
             className="px-3 py-1 border border-amber-50/35 hover:border-amber-50 hover:bg-amber-800 dark:hover:bg-stone-900 rounded-md text-xs font-semibold uppercase tracking-wider transition"
@@ -476,6 +560,77 @@ export const Lobby: React.FC<LobbyProps> = ({
                       </button>
                     </div>
                   </div>
+                </div>
+
+                {/* Active Tournaments Arena Card */}
+                <div className="bg-orange-50/20 dark:bg-[#2A211C]/20 border-2 border-amber-900/10 dark:border-amber-800/10 hover:border-amber-900/20 dark:hover:border-amber-700/20 rounded-2xl p-4 space-y-4 text-left col-span-1 md:col-span-2">
+                  <div className="flex items-center space-x-2 border-b border-stone-200 dark:border-stone-850 pb-2">
+                    <Trophy className="w-4.5 h-4.5 text-amber-700 dark:text-amber-400" />
+                    <h3 className="font-serif font-black text-amber-950 dark:text-amber-100 text-xs tracking-wide">
+                      {lang === 'en' ? 'Active Tournaments Arena' : 'செயலில் உள்ள போட்டிகள்'}
+                    </h3>
+                  </div>
+
+                  {tournaments.length === 0 ? (
+                    <div className="text-center text-stone-400 dark:text-stone-500 py-3 text-[10px] italic font-semibold">
+                      {lang === 'en' ? 'No tournaments hosted currently.' : 'தற்போது போட்டிகள் எதுவும் இல்லை.'}
+                    </div>
+                  ) : (
+                    <div className="space-y-2.5 max-h-56 overflow-y-auto pr-1 scrollbar-thin">
+                      {tournaments.map((tourney: AdminTournament) => {
+                        const isRegistered = tourney.players.includes(user?.displayName || '');
+                        const isUpcoming = tourney.status === 'upcoming';
+                        const isLive = tourney.status === 'live';
+                        const isFinished = tourney.status === 'finished';
+
+                        return (
+                          <div 
+                            key={tourney.id}
+                            className="bg-white dark:bg-[#1C1613] border border-stone-200 dark:border-stone-850 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 shadow-sm"
+                          >
+                            <div className="space-y-1 text-left min-w-0">
+                              <div className="flex items-center space-x-2 flex-wrap">
+                                <span className="font-serif font-bold text-xs text-amber-950 dark:text-amber-100 truncate">
+                                  {tourney.name}
+                                </span>
+                                <span className={`px-1.5 py-0.2 rounded text-[7.5px] font-bold border uppercase leading-none ${
+                                  isLive ? 'bg-red-100 border-red-200 text-red-700 dark:bg-red-950/40 dark:border-red-900 dark:text-red-400 animate-pulse' :
+                                  isFinished ? 'bg-green-100 border-green-200 text-green-700 dark:bg-green-950/40 dark:border-green-900 dark:text-green-400' :
+                                  'bg-stone-100 border-stone-200 text-stone-600 dark:bg-stone-900 dark:border-stone-800 dark:text-gray-400'
+                                }`}>
+                                  {tourney.status}
+                                </span>
+                              </div>
+                              <div className="flex flex-wrap gap-x-3 gap-y-1 text-[8.5px] text-stone-400 dark:text-stone-500 font-bold font-mono leading-none">
+                                <span className="flex items-center gap-1"><Award size={10} className="text-[#F5B041]" /> REWARD: {tourney.rewards}</span>
+                                <span className="flex items-center gap-1"><Users size={10} className="text-[#00C2FF]" /> SEED: {tourney.players.length} joined</span>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center justify-end shrink-0">
+                              {isRegistered ? (
+                                <span className="px-3 py-1 bg-green-500/10 border border-green-500/20 text-green-600 dark:text-green-400 text-[9px] font-black uppercase rounded-lg">
+                                  Registered ✓
+                                </span>
+                              ) : isUpcoming ? (
+                                <button
+                                  onClick={() => handleRegisterTournament(tourney)}
+                                  disabled={isRegistering !== null}
+                                  className="px-3 py-1 bg-amber-900 hover:bg-amber-800 dark:bg-amber-850 dark:hover:bg-amber-750 disabled:opacity-50 text-amber-50 rounded-lg text-[9px] font-extrabold uppercase transition active:scale-95 cursor-pointer shadow-sm"
+                                >
+                                  Join (100 🪙)
+                                </button>
+                              ) : (
+                                <span className="px-3 py-1 bg-stone-100 dark:bg-stone-900 text-stone-400 dark:text-stone-600 text-[9px] font-extrabold uppercase rounded-lg border border-stone-200/50 dark:border-stone-800/60 cursor-not-allowed">
+                                  {isLive ? 'Live ⚔️' : 'Ended 🏁'}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-import { useThayamGame, getPlayerPath } from '../hooks/useThayamGame';
+import { useThayamGame, getPlayerPath, GOAL_INDEX } from '../hooks/useThayamGame';
 
 import { Board } from './Board';
 
@@ -372,7 +372,7 @@ export const GameClient: React.FC<GameClientProps> = ({
 
     const piece = pieces.find((p) => p.id === move.pieceId)!;
 
-    if (move.targetIndex === 24) score += 5000;
+    if (move.targetIndex === GOAL_INDEX) score += 5000;
 
     if (move.captures) score += 1000;
 
@@ -644,9 +644,9 @@ export const GameClient: React.FC<GameClientProps> = ({
 
                 const atBase = pPieces.filter((pc) => pc.indexInPath === -1).length;
 
-                const atHome = pPieces.filter((pc) => pc.indexInPath === 24).length;
+                const atHome = pPieces.filter((pc) => pc.indexInPath === GOAL_INDEX).length;
 
-                const onBoard = pPieces.filter((pc) => pc.indexInPath >= 0 && pc.indexInPath < 24).length;
+                const onBoard = pPieces.filter((pc) => pc.indexInPath >= 0 && pc.indexInPath < GOAL_INDEX).length;
 
 
 
@@ -799,6 +799,24 @@ export const GameClient: React.FC<GameClientProps> = ({
             theme={theme}
 
             lang={lang}
+
+            selectedPieceMoves={
+              selectedPieceId !== null
+                ? validMoves
+                    .filter((m) => m.pieceId === selectedPieceId)
+                    .map((m) => ({
+                      rollValue: m.rollValue,
+                      targetCell: m.pathCoords[m.pathCoords.length - 1],
+                      pathCoords: m.pathCoords,
+                    }))
+                : []
+            }
+
+            onMoveSelect={(rollValue) => {
+              if (selectedPieceId !== null) {
+                executeMove(selectedPieceId, rollValue);
+              }
+            }}
 
           >
 

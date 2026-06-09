@@ -19,18 +19,26 @@ export const useRouter = () => {
 };
 
 export const RouterProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [pathname, setPathname] = useState(window.location.pathname);
+  const normalize = (p: string) => {
+    const trimmed = p.trim();
+    if (trimmed.length > 1 && trimmed.endsWith('/')) {
+      return trimmed.slice(0, -1);
+    }
+    return trimmed;
+  };
+
+  const [pathname, setPathname] = useState(() => normalize(window.location.pathname));
 
   useEffect(() => {
     const handlePopState = () => {
-      setPathname(window.location.pathname);
+      setPathname(normalize(window.location.pathname));
     };
 
     window.addEventListener('popstate', handlePopState);
     
     // Custom event listener for programmatically triggered routing updates
     const handleLocationChange = () => {
-      setPathname(window.location.pathname);
+      setPathname(normalize(window.location.pathname));
     };
     window.addEventListener('locationchange', handleLocationChange);
 
@@ -41,10 +49,11 @@ export const RouterProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   }, []);
 
   const navigate = (to: string, replace = false) => {
+    const normalizedTo = normalize(to);
     if (replace) {
-      window.history.replaceState(null, '', to);
+      window.history.replaceState(null, '', normalizedTo);
     } else {
-      window.history.pushState(null, '', to);
+      window.history.pushState(null, '', normalizedTo);
     }
     // Dispatch custom event to notify all Router instances
     window.dispatchEvent(new Event('locationchange'));

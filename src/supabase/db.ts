@@ -93,7 +93,8 @@ export const dbService = {
       
       if (fetchError || !data) throw fetchError || new Error("Room not found");
       
-      const mergedState = { ...data.state };
+      const stateObj = data.state || {};
+      const mergedState = { ...stateObj };
       if (!mergedState.players) mergedState.players = {};
       mergedState.players[playerIdStr] = player;
       mergedState.updatedAt = Date.now();
@@ -132,7 +133,8 @@ export const dbService = {
       
       if (fetchError || !data) return;
 
-      const mergedState = { ...data.state, ...updates, updatedAt: Date.now() };
+      const stateObj = data.state || {};
+      const mergedState = { ...stateObj, ...updates, updatedAt: Date.now() };
 
       // Write back
       await supabase
@@ -222,7 +224,8 @@ export const dbService = {
         .single();
       
       if (data) {
-        const chat = data.state.chat || [];
+        const stateObj = data.state || {};
+        const chat = stateObj.chat || [];
         const updatedChat = [...chat, chatItem].slice(-25);
         await this.updateRoom(roomId, { chat: updatedChat });
       }
@@ -233,3 +236,5 @@ export const dbService = {
     }
   }
 };
+
+

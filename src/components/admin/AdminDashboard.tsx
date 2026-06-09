@@ -34,38 +34,73 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentTab }) =>
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [tickerActivities, setTickerActivities] = useState<string[]>([]);
 
-  // Prepopulate live activity logs ticker
+  // Monitor real-time logs and live room activity streams
   useEffect(() => {
-    const defaultActivities = [
-      'SoulTaker rolled a Thayam in R-709',
-      'ShadowBlade completed Match m1',
-      'Valkyrie9 entered Matchmaking Queue',
-      'Lobby broadcast: System maintenance in 4 hours',
-      'GlitchMaster IP flagged for rate-limit warning',
-      'CyberShaman joined Room R-112',
-      'New Abuse report filed by ShadowBlade',
-      'Summer Conquest Arena bracket progression calculated',
-    ];
-    setTickerActivities(defaultActivities);
+    let rawRoomActivities: { text: string; time: number }[] = [];
+    let rawAdminActivities: { text: string; time: number }[] = [];
 
-    // Simulate real-time streams
-    const interval = setInterval(() => {
-      const actions = [
-        'rolled a 4', 'captured a token', 'entered the safe zone',
-        'joined the lobby', 'disconnected', 'initiated matching',
-        'called for rematch', 'sent chat signal'
-      ];
-      const mockUsers = ['SoulTaker', 'ShadowBlade', 'ViperCSS', 'CyberShaman', 'NeonDagger', 'Valkyrie9', 'AresWar'];
-      const randomUser = mockUsers[Math.floor(Math.random() * mockUsers.length)];
-      const randomAction = actions[Math.floor(Math.random() * actions.length)];
-      const randomRoom = `R-${Math.floor(Math.random() * 800) + 100}`;
-
-      const newLog = `${randomUser} ${randomAction} in ${randomRoom}`;
+    const updateUnifiedTicker = () => {
+      const merged = [...rawRoomActivities, ...rawAdminActivities];
+      merged.sort((a, b) => b.time - a.time);
       
-      setTickerActivities(prev => [newLog, ...prev.slice(0, 15)]);
-    }, 4500);
+      const textLogs = merged.map(item => item.text);
+      
+      const fallbacks = [
+        'Hologram Engine: Awaiting player connections...',
+        'Cluster status: ASIA-1 node responsive',
+        'Active database stream synchronized successfully.'
+      ];
 
-    return () => clearInterval(interval);
+      const combined = [...textLogs, ...fallbacks].slice(0, 15);
+      setTickerActivities(combined);
+    };
+
+    // 1. Subscribe to Live Rooms (game updates, dice rolls, chats)
+    const unsubscribeRooms = adminDb.subscribeToRooms((roomsList) => {
+      const roomLogs: { text: string; time: number }[] = [];
+      
+      roomsList.forEach((room) => {
+        // Parse chat entries which double as gameplay action logs
+        if (room.state && room.state.chat) {
+          room.state.chat.forEach((c: any) => {
+            const timeVal = c.timestamp ? new Date(c.timestamp).getTime() : Date.now();
+            roomLogs.push({
+              text: `[${room.roomId}] ${c.senderName}: ${c.message}`,
+              time: isNaN(timeVal) ? Date.now() : timeVal
+            });
+          });
+        }
+
+        // Add player listings
+        const names = Object.values(room.players || {}).map((p: any) => p.name).join(', ');
+        roomLogs.push({
+          text: `Lobby ${room.roomId} status changed to ${room.status} (${names || 'no players'})`,
+          time: room.updatedAt || Date.now()
+        });
+      });
+
+      rawRoomActivities = roomLogs;
+      updateUnifiedTicker();
+    });
+
+    // 2. Subscribe to Admin Operations Log
+    const unsubscribeAdminLogs = adminDb.subscribeToAdminLogs((logsList) => {
+      const logsMapped = logsList.map((log) => {
+        const timeVal = log.timestamp ? new Date(log.timestamp).getTime() : Date.now();
+        return {
+          text: `[Admin Operations] ${log.admin_username}: ${log.action} (${log.details})`,
+          time: isNaN(timeVal) ? Date.now() : timeVal
+        };
+      });
+
+      rawAdminActivities = logsMapped;
+      updateUnifiedTicker();
+    });
+
+    return () => {
+      unsubscribeRooms();
+      unsubscribeAdminLogs();
+    };
   }, []);
 
   const handleLogout = async () => {

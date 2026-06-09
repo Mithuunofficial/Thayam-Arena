@@ -9,6 +9,8 @@ import type { Language } from './utils/i18n';
 import { AdminLogin } from './components/admin/AdminLogin';
 import { AdminDashboard } from './components/admin/AdminDashboard';
 import { AdminRoute } from './components/admin/AdminRoute';
+import { ProfilePage } from './components/ProfilePage';
+
 
 const DashboardRedirect = () => {
   const { navigate } = useRouter();
@@ -125,6 +127,16 @@ function ThayamApp() {
             )}
           </ProtectedRoute>
         }
+      />
+
+      {/* User Profile Page */}
+      <Route 
+        path="/profile" 
+        element={
+          <ProtectedRoute>
+            <ProfilePage />
+          </ProtectedRoute>
+        } 
       />
 
       {/* Admin Login Route */}

@@ -1,25 +1,23 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mock-supabase.supabase.co';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'mock-anon-key';
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 let supabase: any = null;
 let isMock = true;
 
-if (
-  import.meta.env.VITE_SUPABASE_URL && 
-  import.meta.env.VITE_SUPABASE_URL !== 'https://mock-supabase.supabase.co' &&
-  import.meta.env.VITE_SUPABASE_ANON_KEY
-) {
+if (supabaseUrl && supabaseUrl !== 'https://your-project-id.supabase.co' && supabaseAnonKey) {
   try {
     supabase = createClient(supabaseUrl, supabaseAnonKey);
-    isMock = false;
-    console.log("Supabase client initialized.");
+    isMock = localStorage.getItem('thayam_force_local_mode') === 'true';
+    console.log("Supabase client initialized. isMock =", isMock);
   } catch (error) {
-    console.warn("Failed to initialize Supabase SDK, falling back to local simulation:", error);
+    console.error("Failed to initialize Supabase SDK:", error);
   }
 } else {
-  console.log("No custom VITE_SUPABASE_URL detected. Local BroadcastChannel emulation enabled.");
+  console.warn("No Supabase environment variables detected. Offline mock mode enabled.");
 }
 
 export { supabase, isMock };
+
+

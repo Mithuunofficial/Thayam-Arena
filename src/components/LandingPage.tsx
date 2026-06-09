@@ -58,14 +58,17 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         <div className="flex items-center space-x-4">
           {/* Authenticated user profile badge */}
           {user && (
-            <div className="hidden sm:flex items-center space-x-2 px-3 py-1.5 bg-amber-500/5 border border-amber-500/20 rounded-xl">
+            <button 
+              onClick={() => navigate('/profile')}
+              className="hidden sm:flex items-center space-x-2 px-3 py-1.5 bg-amber-500/5 hover:bg-amber-500/10 border border-amber-500/20 rounded-xl cursor-pointer transition-all hover:scale-[1.02]"
+            >
               <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[#FFF0C2] to-[#F5B041] flex items-center justify-center text-black font-extrabold text-[9px] shadow-[0_0_4px_#F5B041] select-none">
                 {user.displayName.substring(0, 2).toUpperCase()}
               </div>
               <span className="text-xs font-bold text-amber-950 dark:text-amber-200 font-sans tracking-wide">
-                {user.displayName}
+                {user.displayName} (🪙 {user.coins ?? 1000})
               </span>
-            </div>
+            </button>
           )}
 
           <button 
