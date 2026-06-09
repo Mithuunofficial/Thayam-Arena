@@ -6,6 +6,9 @@ import { LandingPage } from './components/LandingPage';
 import { Lobby } from './components/Lobby';
 import { GameClient } from './components/GameClient';
 import type { Language } from './utils/i18n';
+import { AdminLogin } from './components/admin/AdminLogin';
+import { AdminDashboard } from './components/admin/AdminDashboard';
+import { AdminRoute } from './components/admin/AdminRoute';
 
 const DashboardRedirect = () => {
   const { navigate } = useRouter();
@@ -121,8 +124,23 @@ function ThayamApp() {
               )
             )}
           </ProtectedRoute>
-        } 
+        }
       />
+
+      {/* Admin Login Route */}
+      <Route path="/admin/login" element={<AdminLogin />} />
+
+      {/* Protected Admin Routes */}
+      <Route path="/admin" element={<AdminRoute><AdminDashboard currentTab="dashboard" /></AdminRoute>} />
+      <Route path="/admin/users" element={<AdminRoute><AdminDashboard currentTab="users" /></AdminRoute>} />
+      <Route path="/admin/rooms" element={<AdminRoute><AdminDashboard currentTab="rooms" /></AdminRoute>} />
+      <Route path="/admin/matches" element={<AdminRoute><AdminDashboard currentTab="matches" /></AdminRoute>} />
+      <Route path="/admin/analytics" element={<AdminRoute><AdminDashboard currentTab="analytics" /></AdminRoute>} />
+      <Route path="/admin/tournaments" element={<AdminRoute><AdminDashboard currentTab="tournaments" /></AdminRoute>} />
+      <Route path="/admin/notifications" element={<AdminRoute><AdminDashboard currentTab="notifications" /></AdminRoute>} />
+      <Route path="/admin/reports" element={<AdminRoute><AdminDashboard currentTab="reports" /></AdminRoute>} />
+      <Route path="/admin/settings" element={<AdminRoute><AdminDashboard currentTab="settings" /></AdminRoute>} />
+      <Route path="/admin/logs" element={<AdminRoute><AdminDashboard currentTab="logs" /></AdminRoute>} />
     </>
   );
 }
