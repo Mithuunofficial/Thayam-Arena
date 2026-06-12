@@ -4,18 +4,18 @@ import { dbService } from '../supabase/db';
 import type { RoomState } from '../supabase/db';
 
 export const OUTER_LOOP: [number, number][] = [
-  [6, 3], [6, 2], [6, 1], [6, 0], [5, 0], [4, 0], [3, 0], [2, 0], [1, 0], [0, 0],
-  [0, 1], [0, 2], [0, 3], [0, 4], [0, 5], [0, 6], [1, 6], [2, 6], [3, 6], [4, 6],
-  [5, 6], [6, 6], [6, 5], [6, 4]
+  [6, 3], [6, 4], [6, 5], [6, 6], [5, 6], [4, 6], [3, 6], [2, 6], [1, 6], [0, 6],
+  [0, 5], [0, 4], [0, 3], [0, 2], [0, 1], [0, 0], [1, 0], [2, 0], [3, 0], [4, 0],
+  [5, 0], [6, 0], [6, 1], [6, 2]
 ];
 
 export const MIDDLE_LOOP: [number, number][] = [
-  [5, 3], [5, 2], [5, 1], [4, 1], [3, 1], [2, 1], [1, 1], [1, 2],
-  [1, 3], [1, 4], [1, 5], [2, 5], [3, 5], [4, 5], [5, 5], [5, 4]
+  [5, 3], [5, 4], [5, 5], [4, 5], [3, 5], [2, 5], [1, 5], [1, 4],
+  [1, 3], [1, 2], [1, 1], [2, 1], [3, 1], [4, 1], [5, 1], [5, 2]
 ];
 
 export const INNER_LOOP: [number, number][] = [
-  [4, 3], [4, 2], [3, 2], [2, 2], [2, 3], [2, 4], [3, 4], [4, 4]
+  [4, 3], [4, 4], [3, 4], [2, 4], [2, 3], [2, 2], [3, 2], [4, 2]
 ];
 
 export const SAFE_ZONES = ['6,3', '3,0', '0,3', '3,6', '1,1', '1,5', '5,1', '5,5', '3,3'];
@@ -46,13 +46,15 @@ export interface LogEntry {
 }
 
 export function getPlayerPath(playerId: number): [number, number][] {
-  const outerStart = playerId * 6;
+  const adjustedPlayerIndex = (4 - playerId) % 4;
+  
+  const outerStart = adjustedPlayerIndex * 6;
   const outerPath = [...OUTER_LOOP.slice(outerStart), ...OUTER_LOOP.slice(0, outerStart)];
   
-  const middleStart = playerId * 4;
+  const middleStart = adjustedPlayerIndex * 4;
   const middlePath = [...MIDDLE_LOOP.slice(middleStart), ...MIDDLE_LOOP.slice(0, middleStart)];
   
-  const innerStart = playerId * 2;
+  const innerStart = adjustedPlayerIndex * 2;
   const innerPath = [...INNER_LOOP.slice(innerStart), ...INNER_LOOP.slice(0, innerStart)];
   
   return [...outerPath, ...middlePath, ...innerPath, [3, 3]];
